@@ -170,11 +170,11 @@ def is_late():
                 hours, rem = divmod(delta.seconds, 3600)
                 minutes = rem // 60
                 st.write(f"Latest allowed submission to be on time: {latest_allowed_dt.strftime('%m/%d %I:%M %p')}")
-                st.write(f"You needed to submit {days} days, {hours} hours, and {minutes} minutes earlier.")
+                st.write(f"Would have needed to be submitted {days} days, {hours} hours, and {minutes} minutes earlier.")
             else:
                 # This can happen if effective_business < required due to holidays clashing; still show latest allowed
                 st.write(f"Latest allowed submission to be on time: {latest_allowed_dt.strftime('%m/%d %I:%M %p')}")
-                st.write("Your submission time appears earlier than the calculated latest allowed datetime but other conditions (holidays or weekday boundaries) made this late.")
+                st.write("This submission time appears earlier than the calculated latest allowed datetime but other conditions (holidays or weekday boundaries) made this late.")
         else:
             st.write("Unable to find a latest acceptable submission datetime within the last year (check holidays/inputs).")
 
