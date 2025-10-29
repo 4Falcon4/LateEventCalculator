@@ -226,7 +226,7 @@ with st.form("Late Event Form", enter_to_submit=False):
     submitted_time = st.time_input("Time Submitted", None) if show_time_input else st.text_input("Time Submitted", placeholder="3:00 pm")
     event_date = st.date_input("Date of Event")
     event_time = st.time_input("Event Start/Setup Time", None, help='Enter time coverage will start (should be setup time)') if show_time_input else st.text_input("Event Start/Setup Time",placeholder="3:00 pm", help='Enter time coverage will start (should be setup time)')
-    event_end_time = st.time_input("Event End Time", None, help='Optional (Will show estimated charge if included') if show_time_input else st.text_input("Event End Time",placeholder="3:00 pm | optional", help='Optional (Will show estimated charge if included')
+    event_end_time = st.time_input("Event End Time", None, help='Optional (Will show estimated charge if included)') if show_time_input else st.text_input("Event End Time",placeholder="3:00 pm | optional", help='Optional (Will show estimated charge if included)')
     num_closed = st.number_input("Number of Weekdays Closed", 0,
                                  help="Number of days that should not be counted as business days between submission and event dates")
     submitted = st.form_submit_button("Calculate")
