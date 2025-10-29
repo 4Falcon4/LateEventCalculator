@@ -203,8 +203,9 @@ with st.form("Late Event Form", enter_to_submit=False):
     event_time = st.time_input("Time of Event", None) if show_time_input else st.text_input("Time of Event",placeholder="3:00 pm")
     num_holidays = st.number_input("Number of Holidays", 0, 
                                    help="Number of days that should not be counted as business days")
-    submitted = st.form_submit_button("Calculate", on_click=lambda : validate_form())
-    validate_form()
+    submitted = st.form_submit_button("Calculate")
+    if submitted:
+        validate_form()
     if form_error is not None:
         logging.debug("Showing form error: %s", form_error)
         st.badge(form_error, icon=":material/warning:", color="red" )
