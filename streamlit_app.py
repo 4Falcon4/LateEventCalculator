@@ -286,13 +286,19 @@ st.set_page_config(
 
 st.markdown("""
     <style>
-    /* Main background gradient - creates a smooth color transition */
+    /* ============================================
+       THEME-AWARE STYLING
+       These styles change based on user's theme preference (light/dark)
+       ============================================ */
+
+    /* LIGHT MODE STYLES (Default)
+       These styles apply when user has light mode enabled */
     .stApp {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         background-attachment: fixed;
     }
 
-    /* Alternative backgrounds you can try (uncomment to use):
+    /* Alternative light mode backgrounds you can try (uncomment to use):
 
     /* Calm blue gradient */
     /* background: linear-gradient(135deg, #3a7bd5 0%, #00d2ff 100%); */
@@ -300,24 +306,22 @@ st.markdown("""
     /* Sunset colors */
     /* background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); */
 
-    /* Dark theme */
-    /* background: linear-gradient(135deg, #1f1c2c 0%, #928dab 100%); */
+    /* Green nature */
+    /* background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%); */
     */
 
-    /* Style the main content container */
     .main .block-container {
         padding-top: 2rem;
         padding-bottom: 2rem;
         max-width: 900px;
-        background-color: rgba(255, 255, 255, 0.95);
+        background-color: rgba(255, 255, 255, 0.95);  /* White with slight transparency */
         border-radius: 20px;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         backdrop-filter: blur(10px);
     }
 
-    /* Style all headers */
     h1 {
-        color: #667eea;
+        color: #667eea;  /* Light mode: bright purple */
         text-align: center;
         font-size: 3rem !important;
         margin-bottom: 1rem;
@@ -325,18 +329,67 @@ st.markdown("""
     }
 
     h2, h3 {
-        color: #764ba2;
+        color: #764ba2;  /* Light mode: darker purple */
     }
 
-    /* Style the form container */
+    /* DARK MODE STYLES
+       These styles apply when user has dark mode enabled
+       Uses CSS media query to detect system preference */
+    @media (prefers-color-scheme: dark) {
+        /* Dark mode background - darker gradient for better contrast */
+        .stApp {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            background-attachment: fixed;
+        }
+
+        /* Alternative dark mode backgrounds (uncomment to try):
+
+        /* Dark purple */
+        /* background: linear-gradient(135deg, #2d1b69 0%, #1a0933 100%); */
+
+        /* Dark blue-gray */
+        /* background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%); */
+
+        /* Dark teal */
+        /* background: linear-gradient(135deg, #134e5e 0%, #71b280 100%); */
+        */
+
+        /* Dark mode content card - darker with blue tint */
+        .main .block-container {
+            background-color: rgba(30, 30, 50, 0.95);  /* Dark blue-gray background */
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);  /* Stronger shadow */
+            border: 1px solid rgba(100, 150, 255, 0.2);  /* Subtle blue border */
+        }
+
+        /* Dark mode headers - lighter colors for visibility */
+        h1 {
+            color: #8fa3ff;  /* Lighter blue-purple for dark mode */
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
+        }
+
+        h2, h3 {
+            color: #a89fff;  /* Light purple for dark mode */
+        }
+
+        /* Dark mode text color for better readability */
+        p, label, span, div {
+            color: #e0e0e0 !important;
+        }
+    }
+
+    /* ============================================
+       FORM STYLING (applies to both themes)
+       ============================================ */
+
+    /* Style the form container - LIGHT MODE */
     .stForm {
-        background-color: rgba(102, 126, 234, 0.05);
+        background-color: rgba(102, 126, 234, 0.05);  /* Light purple tint */
         padding: 2rem;
         border-radius: 15px;
         border: 2px solid rgba(102, 126, 234, 0.3);
     }
 
-    /* Style input fields */
+    /* Style input fields - LIGHT MODE */
     .stTextInput > div > div > input,
     .stNumberInput > div > div > input,
     .stDateInput > div > div > input,
@@ -346,7 +399,7 @@ st.markdown("""
         background-color: white;
     }
 
-    /* Style buttons */
+    /* Style buttons - LIGHT MODE */
     .stButton > button {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
@@ -365,11 +418,45 @@ st.markdown("""
         box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
     }
 
-    /* Style the toggle switch */
+    /* Style the toggle switch - LIGHT MODE */
     .stCheckbox {
         background-color: rgba(255, 255, 255, 0.8);
         padding: 0.5rem;
         border-radius: 8px;
+    }
+
+    /* DARK MODE - Form Elements */
+    @media (prefers-color-scheme: dark) {
+        /* Dark mode form container */
+        .stForm {
+            background-color: rgba(100, 150, 255, 0.08);  /* Subtle blue glow */
+            border: 2px solid rgba(100, 150, 255, 0.3);
+        }
+
+        /* Dark mode input fields */
+        .stTextInput > div > div > input,
+        .stNumberInput > div > div > input,
+        .stDateInput > div > div > input,
+        .stTimeInput > div > div > input {
+            background-color: rgba(40, 40, 60, 0.8);  /* Dark input background */
+            border: 2px solid #6495ff;  /* Lighter blue border */
+            color: #e0e0e0;  /* Light text */
+        }
+
+        /* Dark mode buttons - brighter gradient for visibility */
+        .stButton > button {
+            background: linear-gradient(135deg, #5a7fff 0%, #6a5acd 100%);
+            box-shadow: 0 4px 15px rgba(90, 127, 255, 0.5);
+        }
+
+        .stButton > button:hover {
+            box-shadow: 0 6px 20px rgba(90, 127, 255, 0.7);
+        }
+
+        /* Dark mode toggle */
+        .stCheckbox {
+            background-color: rgba(60, 60, 80, 0.6);
+        }
     }
 
     /* Add decorative emoji header */
