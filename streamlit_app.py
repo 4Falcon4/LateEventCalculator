@@ -128,24 +128,63 @@ def is_late():
     holidays = int(num_closed) if num_closed else 0
     effective_business = max(0, business_days - holidays)
 
-    # Display results
-    st.write(f"Effective submission date used for business-day count: {effective_sub_date.strftime('%Y-%m-%d')}")
-    st.write(f"Business days between submission and event (weekdays only): {business_days}")
-    if holidays:
-        st.write(f"Holidays excluded: {holidays}")
-    st.write(f"Effective business days available: {effective_business}")
-    st.write(f"Submitted at: {submitted_dt.strftime('%m/%d %I:%M %p')}")
-    st.write(f"Event start/setup is at: {event_dt.strftime('%m/%d %I:%M %p')}")
-    if event_end_time:
-        st.write(f"Event ends at: {event_end_dt.strftime('%m/%d %I:%M %p')}")
+    # ============================================
+    # DISPLAY RESULTS WITH VISUAL STYLING
+    # ============================================
+
+    # Add a divider for visual separation
+    st.divider()
+
+    # Create a header for the results section
+    st.markdown("### 📊 Calculation Results")
+
+    # Display key information in an attractive format
+    # Using columns to create a nice layout
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("**📅 Submission Info**")
+        st.info(f"**Submitted at:**\n\n{submitted_dt.strftime('%m/%d %I:%M %p')}")
+        st.info(f"**Effective submission date:**\n\n{effective_sub_date.strftime('%Y-%m-%d')}")
+
+    with col2:
+        st.markdown("**🎉 Event Info**")
+        st.info(f"**Event start/setup:**\n\n{event_dt.strftime('%m/%d %I:%M %p')}")
+        if event_end_time:
+            st.info(f"**Event ends at:**\n\n{event_end_dt.strftime('%m/%d %I:%M %p')}")
+
+    # Display business day calculation in a highlighted box
+    st.markdown("**⏳ Business Days Calculation**")
+
+    # Create metrics for better visual display
+    metric_col1, metric_col2, metric_col3 = st.columns(3)
+
+    with metric_col1:
+        st.metric("Weekdays Between", business_days, help="Business days between submission and event (excluding weekends)")
+
+    with metric_col2:
+        st.metric("Holidays Excluded", holidays if holidays else 0, help="Number of holidays to exclude from calculation")
+
+    with metric_col3:
+        st.metric("Effective Business Days", effective_business, help="Final count after excluding holidays")
 
     # On-time threshold
     required_business_days = 14
 
+    # ============================================
+    # DISPLAY ON-TIME OR LATE STATUS
+    # ============================================
+    st.divider()
+
     if effective_business < required_business_days:
-        st.error("Event is late", icon=":material/close:")
+        # Event is LATE - show error message with visual emphasis
+        st.error("❌ **EVENT IS LATE**", icon=":material/close:")
+
+        # Show estimated charge if event end time is provided
         if event_end_time:
-            st.badge(f"Estimated charge: ${estimate_charge(event_time, event_end_time)}", icon="💰", color="orange")
+            charge = estimate_charge(event_time, event_end_time)
+            st.warning(f"💰 **Estimated Late Fee: ${charge:.2f}**")
+
         logging.info("Late: %s effective business days (required %s)", effective_business, required_business_days)
         # Find the latest submission datetime that would have been on time.
         # Allowed latest time on a candidate date is the lesser of 5:00 PM and event_time (if provided),
@@ -179,25 +218,44 @@ def is_late():
                 latest_allowed_dt = datetime.combine(candidate_date, candidate_submit_time)
                 break
 
+        # Display information about when it should have been submitted
         if latest_allowed_dt:
-            # compute how much earlier the user needed to submit
-            actual_dt = submitted_dt
-            if actual_dt > latest_allowed_dt:
-                delta = actual_dt - latest_allowed_dt
-                days = delta.days
-                hours, rem = divmod(delta.seconds, 3600)
-                minutes = rem // 60
-                st.write(f"Latest allowed submission to be on time: {latest_allowed_dt.strftime('%m/%d %I:%M %p')}")
-                st.write(f"Would have needed to be submitted {days} days, {hours} hours, and {minutes} minutes earlier.")
-            else:
-                # This can happen if effective_business < required due to holidays clashing; still show latest allowed
-                st.write(f"Latest allowed submission to be on time: {latest_allowed_dt.strftime('%m/%d %I:%M %p')}")
-                st.write("This submission time appears earlier than the calculated latest allowed datetime but other conditions (holidays or weekday boundaries) made this late.")
+            # Create an expandable section for additional details
+            with st.expander("📋 **See Details: When Should This Have Been Submitted?**", expanded=True):
+                # compute how much earlier the user needed to submit
+                actual_dt = submitted_dt
+                if actual_dt > latest_allowed_dt:
+                    delta = actual_dt - latest_allowed_dt
+                    days = delta.days
+                    hours, rem = divmod(delta.seconds, 3600)
+                    minutes = rem // 60
+
+                    # Show the latest allowed time prominently
+                    st.markdown(f"**⏰ Latest Allowed Submission:**")
+                    st.success(f"{latest_allowed_dt.strftime('%m/%d %I:%M %p')}")
+
+                    # Show how much earlier it needed to be submitted
+                    st.markdown(f"**⏪ How Much Earlier Needed:**")
+                    st.info(f"**{days}** days, **{hours}** hours, and **{minutes}** minutes earlier")
+                else:
+                    # This can happen if effective_business < required due to holidays clashing
+                    st.markdown(f"**⏰ Latest Allowed Submission:**")
+                    st.success(f"{latest_allowed_dt.strftime('%m/%d %I:%M %p')}")
+                    st.warning("⚠️ This submission time appears earlier than the calculated latest allowed datetime, but other conditions (holidays or weekday boundaries) made this late.")
         else:
-            st.write("Unable to find a latest acceptable submission datetime within the last year (check holidays/inputs).")
+            st.warning("⚠️ Unable to find a latest acceptable submission datetime within the last year (check holidays/inputs).")
 
     else:
-        st.success("Event is on time.", icon=":material/check:")
+        # Event is ON TIME - celebrate with a success message!
+        st.success("✅ **EVENT IS ON TIME!**", icon=":material/check:")
+
+        # Show a congratulatory balloon animation (optional, comment out if you don't want it)
+        st.balloons()
+
+        # Display a nice message
+        st.markdown("### 🎉 Congratulations!")
+        st.info(f"You submitted this event with **{effective_business}** business days notice, which exceeds the required **{required_business_days}** days. Great planning!")
+
         logging.info("On time: %s effective business days", effective_business)
         
         
@@ -212,12 +270,149 @@ def estimate_charge(start, end):
 # setup logging
 logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(message)s")
 
-# setup page
-st.set_page_config(page_title="Late Event Calculator", page_icon=":calendar:")
+# setup page configuration - this must be the first Streamlit command
+st.set_page_config(
+    page_title="Late Event Calculator",
+    page_icon="📅",
+    layout="wide",  # Use wide layout for better spacing
+    initial_sidebar_state="collapsed"  # Keep sidebar collapsed for cleaner look
+)
 
-# setup form
+# ============================================
+# CUSTOM CSS STYLING
+# ============================================
+# This section adds custom CSS to make the app look cooler
+# We use st.markdown with unsafe_allow_html=True to inject CSS
+
+st.markdown("""
+    <style>
+    /* Main background gradient - creates a smooth color transition */
+    .stApp {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background-attachment: fixed;
+    }
+
+    /* Alternative backgrounds you can try (uncomment to use):
+
+    /* Calm blue gradient */
+    /* background: linear-gradient(135deg, #3a7bd5 0%, #00d2ff 100%); */
+
+    /* Sunset colors */
+    /* background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); */
+
+    /* Dark theme */
+    /* background: linear-gradient(135deg, #1f1c2c 0%, #928dab 100%); */
+    */
+
+    /* Style the main content container */
+    .main .block-container {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+        max-width: 900px;
+        background-color: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(10px);
+    }
+
+    /* Style all headers */
+    h1 {
+        color: #667eea;
+        text-align: center;
+        font-size: 3rem !important;
+        margin-bottom: 1rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    h2, h3 {
+        color: #764ba2;
+    }
+
+    /* Style the form container */
+    .stForm {
+        background-color: rgba(102, 126, 234, 0.05);
+        padding: 2rem;
+        border-radius: 15px;
+        border: 2px solid rgba(102, 126, 234, 0.3);
+    }
+
+    /* Style input fields */
+    .stTextInput > div > div > input,
+    .stNumberInput > div > div > input,
+    .stDateInput > div > div > input,
+    .stTimeInput > div > div > input {
+        border-radius: 10px;
+        border: 2px solid #667eea;
+        background-color: white;
+    }
+
+    /* Style buttons */
+    .stButton > button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 0.5rem 2rem;
+        font-size: 1.1rem;
+        font-weight: bold;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+
+    .stButton > button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    }
+
+    /* Style the toggle switch */
+    .stCheckbox {
+        background-color: rgba(255, 255, 255, 0.8);
+        padding: 0.5rem;
+        border-radius: 8px;
+    }
+
+    /* Add decorative emoji header */
+    .emoji-header {
+        text-align: center;
+        font-size: 4rem;
+        margin-bottom: 0;
+    }
+
+    /* Style for result containers */
+    div[data-testid="stMarkdownContainer"] > p {
+        font-size: 1.1rem;
+        line-height: 1.8;
+    }
+
+    /* Style badges */
+    .stBadge {
+        font-size: 1rem;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# ============================================
+# APP HEADER
+# ============================================
+# Add a decorative emoji at the top
+st.markdown('<div class="emoji-header">📅⏰</div>', unsafe_allow_html=True)
+
+# Main title
 st.title("Late Event Calculator!")
-show_time_input = st.toggle("Time Dropdown")
+
+# Add a subtitle with description
+st.markdown("""
+    <p style='text-align: center; color: #666; font-size: 1.2rem; margin-bottom: 2rem;'>
+    Calculate if your event submission is on time based on business days
+    </p>
+""", unsafe_allow_html=True)
+
+# ============================================
+# FORM CONTROLS
+# ============================================
+# Toggle between time input methods (dropdown vs text input)
+show_time_input = st.toggle("🕐 Use Time Dropdown (vs Text Input)", help="Toggle between dropdown time picker and text input")
 valid = False
 clicked = False
 form_error = None
@@ -238,4 +433,18 @@ with st.form("Late Event Form", enter_to_submit=False):
     
 if valid and submitted:
     is_late()
-    
+
+# ============================================
+# FOOTER WITH HELPFUL INFORMATION
+# ============================================
+# Add some spacing before the footer
+st.markdown("<br><br>", unsafe_allow_html=True)
+
+# Add a footer with helpful information
+st.divider()
+st.markdown("""
+    <div style='text-align: center; color: #666; padding: 1rem;'>
+    <p style='margin: 0;'>💡 <strong>Tip:</strong> Business days exclude weekends and holidays you specify.</p>
+    <p style='margin: 0; font-size: 0.9rem;'>Submissions after 5:00 PM count as next business day.</p>
+    </div>
+""", unsafe_allow_html=True)
