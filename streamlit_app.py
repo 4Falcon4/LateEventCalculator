@@ -122,8 +122,13 @@ def is_late():
     event_dt = datetime.combine(event_date, e_time or datetime.min.time())
     event_end_dt = datetime.combine(event_date, e_end_time or datetime.min.time())
 
-    # Count business days between effective_submission_date (exclusive) and event_date (inclusive)
-    business_days = business_days_between_exclusive(effective_sub_date, event_date)
+    # Do not count the event date itself; use the last prior weekday as the effective event business date
+    effective_event_business_date = event_date - timedelta(days=1)
+    while effective_event_business_date.weekday() >= 5:  # roll back if it's a weekend
+        effective_event_business_date -= timedelta(days=1)
+
+    # Count business days between effective_submission_date (exclusive) and effective_event_business_date (inclusive)
+    business_days = business_days_between_exclusive(effective_sub_date, effective_event_business_date)
 
     holidays = int(num_closed) if num_closed else 0
     effective_business = max(0, business_days - holidays)
@@ -172,7 +177,10 @@ def is_late():
             elif e_time is not None and candidate_submit_time > e_time:
                 candidate_effective_date = next_business_day(candidate_effective_date)
 
-            candidate_business_days = business_days_between_exclusive(candidate_effective_date, event_date)
+            # --- CHANGED: use effective_event_business_date when computing candidate business days ---
+            candidate_business_days = business_days_between_exclusive(candidate_effective_date, effective_event_business_date)
+            # --- end CHANGED ---
+
             candidate_effective_business = max(0, candidate_business_days - holidays)
 
             if candidate_effective_business >= required_business_days:
@@ -238,4 +246,3 @@ with st.form("Late Event Form", enter_to_submit=False):
     
 if valid and submitted:
     is_late()
-    

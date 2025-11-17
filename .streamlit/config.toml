@@ -1,0 +1,10 @@
+[theme]
+base="dark"
+primaryColor="#FF671D"
+backgroundColor="#414450"
+textColor="#FF671D"
+font="monospace"
+
+[secrets]
+
+files = ["./.streamlit/secrets.toml"]
