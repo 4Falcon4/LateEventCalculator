@@ -103,7 +103,7 @@ def is_late():
 
     s_time = to_time_obj(submitted_time)
     e_time = to_time_obj(event_time)
-    e_end_time = to_time_obj(event_end_time)
+    e_end_time = to_time_obj(event_end_time) if event_end_time else None
 
     # Determine effective submission date: if submitted after 5:00 PM or submitted time > event time,
     # treat it as if submitted the next business day.
