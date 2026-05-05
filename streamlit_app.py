@@ -89,13 +89,12 @@ def is_late():
             d += timedelta(days=1)
         return d
 
-    def business_days_between_exclusive(start_date, end_date):
-        """Count business days between start_date (exclusive) and end_date (inclusive)."""
+    def business_days_between(start_date, end_date):
         if end_date <= start_date:
             return 0
         total_days = (end_date - start_date).days
         days = 0
-        for offset in range(1, total_days + 1):
+        for offset in range(0, total_days):
             d = start_date + timedelta(days=offset)
             if d.weekday() < 5:
                 days += 1
@@ -105,17 +104,12 @@ def is_late():
     e_time = to_time_obj(event_time)
     e_end_time = to_time_obj(event_end_time) if event_end_time else None
 
-    # Determine effective submission date: if submitted after 5:00 PM or submitted time > event time,
+    # Determine effective submission date: if submitted time > event time,
     # treat it as if submitted the next business day.
     effective_sub_date = submitted_date
-    business_close = time(17, 0)
-    if s_time is not None:
-        if s_time > business_close:
-            logging.debug("Submitted after business hours (%s): shifting to next business day", business_close)
-            effective_sub_date = next_business_day(effective_sub_date)
-        elif e_time is not None and s_time > e_time:
-            logging.debug("Submitted time (%s) is after event time (%s): shifting to next business day", s_time, e_time)
-            effective_sub_date = next_business_day(effective_sub_date)
+    if s_time is not None and e_time is not None and s_time > e_time:
+        logging.debug("Submitted time (%s) is after event time (%s): shifting to next business day", s_time, e_time)
+        effective_sub_date = next_business_day(effective_sub_date)
 
     # Build full datetimes for display/logging (fallback to midnight if time missing)
     submitted_dt = datetime.combine(submitted_date, s_time or datetime.min.time())
@@ -123,12 +117,12 @@ def is_late():
     event_end_dt = datetime.combine(event_date, e_end_time or datetime.min.time())
 
     # Do not count the event date itself; use the last prior weekday as the effective event business date
-    effective_event_business_date = event_date - timedelta(days=1)
+    effective_event_business_date = event_date
     while effective_event_business_date.weekday() >= 5:  # roll back if it's a weekend
         effective_event_business_date -= timedelta(days=1)
 
     # Count business days between effective_submission_date (exclusive) and effective_event_business_date (inclusive)
-    business_days = business_days_between_exclusive(effective_sub_date, effective_event_business_date)
+    business_days = business_days_between(effective_sub_date, effective_event_business_date)
 
     holidays = int(num_closed) if num_closed else 0
     effective_business = max(0, business_days - holidays)
@@ -153,14 +147,13 @@ def is_late():
             st.badge(f"Estimated charge: ${estimate_charge(event_time, event_end_time)}", icon="💰", color="orange")
         logging.info("Late: %s effective business days (required %s)", effective_business, required_business_days)
         # Find the latest submission datetime that would have been on time.
-        # Allowed latest time on a candidate date is the lesser of 5:00 PM and event_time (if provided),
-        # because submitting after either will push to next business day.
-        allowed_time_floor = business_close
+        # Allowed latest time on a candidate date is the event_time (if provided),
+        # because submitting after it will push to next business day.
         if e_time is not None:
-            # allowed latest is the earlier of 17:00 and event_time (inclusive)
-            allowed_latest_time = min(business_close, e_time)
+            allowed_latest_time = e_time
         else:
-            allowed_latest_time = business_close
+            # If no event time specified, any time on the candidate date is acceptable
+            allowed_latest_time = time(23, 59, 59)
 
         latest_allowed_dt = None
         # Search backward up to 365 days for a latest acceptable submission datetime
@@ -172,13 +165,11 @@ def is_late():
             candidate_submit_time = allowed_latest_time
             # simulate effective submission date for this candidate
             candidate_effective_date = candidate_date
-            if candidate_submit_time > business_close:
-                candidate_effective_date = next_business_day(candidate_effective_date)
-            elif e_time is not None and candidate_submit_time > e_time:
+            if e_time is not None and candidate_submit_time > e_time:
                 candidate_effective_date = next_business_day(candidate_effective_date)
 
             # --- CHANGED: use effective_event_business_date when computing candidate business days ---
-            candidate_business_days = business_days_between_exclusive(candidate_effective_date, effective_event_business_date)
+            candidate_business_days = business_days_between(candidate_effective_date, effective_event_business_date)
             # --- end CHANGED ---
 
             candidate_effective_business = max(0, candidate_business_days - holidays)
